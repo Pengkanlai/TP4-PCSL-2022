@@ -1,10 +1,12 @@
 import torch
 import numpy as np
 
-def train_model(model):
-    if model = 'linear':
-        f = 
-
+def train_model(model,X):
+    if model == 'linear':
+        f = linear(X)
+    elif model == 'diagonal_linear':
+        f = diagonal_linear(X)
+    return f
 
 def mean_squared_loss(y, y_pred):
     msl = pow(y_pred-y,2).mean()
