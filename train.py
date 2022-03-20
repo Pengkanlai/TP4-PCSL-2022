@@ -16,13 +16,13 @@ def sgd_step(dt,bs,xtr,ytr,loss_type,model):
         y_pred = linear(x,w_1)
         Loss = loss(loss_type,y,y_pred)
         for i in range(w_1.size(0)):
-            w_1 -= dt * torch.autograd.grad(Loss,w_1)
+            w_1[i] -= dt * torch.autograd.grad(Loss,w_1[i])
     if model == 'diagonal_linear':
         y_pred = diagonal_linear(x,w_1,w_2)
         Loss = loss(loss_type,y,y_pred)
         for i in range(w_1.size(0)):
-            w_1 -= dt * torch.autograd.grad(Loss,(w_1,w_2))[0]
-            w_2 -= dt * torch.autograd.grad(Loss,(w_1,w_2))[1]
+            w_1[i] -= dt * torch.autograd.grad(Loss,(w_1[i],w_2[i]))[0]
+            w_2[i] -= dt * torch.autograd.grad(Loss,(w_1[i],w_2[i]))[1]
 
 def train_model(dt,bs,xtr,ytr,loss_type,model):
     nb_iterations = 1000
