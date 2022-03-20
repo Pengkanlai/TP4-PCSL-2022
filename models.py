@@ -1,11 +1,8 @@
 import torch
 import numpy as np
 
-def linear(X):
-    W = torch.random.normal(0., 1., size = (len(X[0])))
-    return X @ W.t()
+def linear(x,w):
+    return x @ w.t()
 
-def diagonal_linear(X):
-    W_1 = torch.random.normal(0., 1., size = (len(X[0])))
-    W_2 = torch.random.normal(0., 1., size = (len(X[0])))
-    return (W_1*W_2)@X
+def diagonal_linear(x,w_1,w_2):
+    return (w_1*w_2)@x
