@@ -30,7 +30,7 @@ def train_model(dt,bs,xtr,ytr,loss_type,model):
     w_1 = torch.empty(xtr.size(0)).normal_(0,1)
     w_2 = torch.empty(xtr.size(0)).normal_(0,1)
     for i in range(nb_iterations):
-        output = sgd_step(dt,bs,xtr,ytr,loss_type,model)
+        sgd_step(dt,bs,xtr,ytr,loss_type,model)
         if model == 'linear':
             y_pred = linear(x,w_1)
             Ltr = loss(loss_type,ytr,y_pred)
