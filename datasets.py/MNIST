@@ -39,4 +39,4 @@ def dataset_preprocessing(X_train, y_train, X_val, y_val, X_test, y_test, relabe
     
     return X_train, y_train, X_val, y_val, X_test, y_test
     
-X_train, y_train, X_val, y_val, X_test, y_test = dataset_preprocessing(X_train, y_train, X_val, y_val, X_test, y_test, relabelling_type="even-odd_digits")
+xtr, ytr, xval, yval, xte, yte = dataset_preprocessing(X_train, y_train, X_val, y_val, X_test, y_test, relabelling_type="even-odd_digits")
