@@ -15,14 +15,16 @@ def sgd_step(dt,bs,xtr,ytr,loss_type,model):
     if model == 'linear':
         y_pred = linear(x,w_1)
         Loss = loss(loss_type,y,y_pred)
+        Loss.backward()
         for i in range(w_1.size(0)):
-            w_1[i] -= dt * torch.autograd.grad(Loss,w_1[i])
-    if model == 'diagonal_linear':
+            w_1[i] -= dt * w_1[i].grad
+    elif model == 'diagonal_linear':
         y_pred = diagonal_linear(x,w_1,w_2)
         Loss = loss(loss_type,y,y_pred)
+        Loss.backward()
         for i in range(w_1.size(0)):
-            w_1[i] -= dt * torch.autograd.grad(Loss,(w_1[i],w_2[i]))[0]
-            w_2[i] -= dt * torch.autograd.grad(Loss,(w_1[i],w_2[i]))[1]
+            w_1[i] -= dt * w_1[i].grad
+            w_2[i] -= dt * w_2[i].gra
 
 def train_model(dt,bs,xtr,ytr,loss_type,model):
     nb_iterations = 1000
@@ -30,11 +32,13 @@ def train_model(dt,bs,xtr,ytr,loss_type,model):
     w_1 = torch.empty(xtr.size(1)).normal_(0,1).requires_grad_()
     w_2 = torch.empty(xtr.size(1)).normal_(0,1).requires_grad_()
     for i in range(nb_iterations):
+        w_1.grad.data.zero_()
+        w_2.grad.data.zero_()
         sgd_step(dt,bs,xtr,ytr,loss_type,model)
         if model == 'linear':
             y_pred = linear(x,w_1)
             Ltr = loss(loss_type,ytr,y_pred)
-        if model == 'diagonal_linear':
+        elif model == 'diagonal_linear':
             y_pred = diagonal_linear(x,w_1,w_2)
             Ltr = loss(loss_type,ytr,y_pred)
         data.append(Ltr)
