@@ -12,5 +12,5 @@ xte = torch.randn((n,d))*covariance_V
 beta = torch.zeros(d)
 beta[0] = 1
   
-ytr = beta@x_train.T
-yte = beta@x_test.T
+ytr = beta@xtr.T
+yte = beta@xte.T
