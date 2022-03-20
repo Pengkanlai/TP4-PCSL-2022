@@ -27,8 +27,8 @@ def sgd_step(dt,bs,xtr,ytr,loss_type,model):
 def train_model(dt,bs,xtr,ytr,loss_type,model):
     nb_iterations = 1000
     data = []
-    w_1 = torch.empty(xtr.size(1)).normal_(0,1)
-    w_2 = torch.empty(xtr.size(1)).normal_(0,1)
+    w_1 = torch.empty(xtr.size(1)).normal_(0,1).requires_grad_()
+    w_2 = torch.empty(xtr.size(1)).normal_(0,1).requires_grad_()
     for i in range(nb_iterations):
         sgd_step(dt,bs,xtr,ytr,loss_type,model)
         if model == 'linear':
