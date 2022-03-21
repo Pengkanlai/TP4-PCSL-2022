@@ -16,15 +16,13 @@ def sgd_step(dt,bs,xtr,ytr,loss_type,model):
         y_pred = linear(x,w_1)
         Loss = loss(loss_type,y,y_pred)
         Loss.backward()
-        for i in range(w_1.size(0)):
-            w_1[i] -= dt * w_1[i].grad
+        w_1 -= dt * w_1.grad
     elif model == 'diagonal_linear':
         y_pred = diagonal_linear(x,w_1,w_2)
         Loss = loss(loss_type,y,y_pred)
         Loss.backward()
-        for i in range(w_1.size(0)):
-            w_1[i] -= dt * w_1[i].grad
-            w_2[i] -= dt * w_2[i].gra
+        w_1 -= dt * w_1.grad
+        w_2 -= dt * w_2.grad
 
 def train_model(dt,bs,xtr,ytr,loss_type,model):
     nb_iterations = 1000
