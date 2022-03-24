@@ -599,94 +599,29 @@ def main():
         'log': subprocess.getoutput('git log --format="%H" -n 1 -z'),
         'status': subprocess.getoutput('git status -z'),
     }
-
+    
     parser = argparse.ArgumentParser()
     parser.add_argument("--device", type=str, default=None)
     parser.add_argument("--dtype", type=str, default='float64')
 
     parser.add_argument("--seed_init", type=int, default=0)
     parser.add_argument("--seed_testset", type=int, default=0, help="determines the testset, will affect the kernelset and trainset as well")
-    parser.add_argument("--seed_kernelset", type=int, default=0, help="determines the kernelset, will affect the trainset as well")
     parser.add_argument("--seed_trainset", type=int, default=0, help="determines the trainset")
 
     parser.add_argument("--dataset", type=str, required=True)
     parser.add_argument("--ptr", type=int, required=True)
-    parser.add_argument("--ptk", type=int, default=0)
     parser.add_argument("--pte", type=int)
     parser.add_argument("--d", type=int)
-    parser.add_argument("--data_param1", type=int,
-                        help="Sphere dimension if dataset = Cylinder."
-                        "Total number of cells, if dataset = sphere_grid. "
-                        "n0 if dataset = signal_1d.")
-    parser.add_argument("--data_param2", type=float,
-                        help="Stretching factor for non-spherical dimensions if dataset = cylinder."
-                        "Number of bins in theta, if dataset = sphere_grid.")
 
     parser.add_argument("--arch", type=str, required=True)
-    parser.add_argument("--act", type=str, required=True)
-    parser.add_argument("--act_beta", type=float, default=1.0)
     parser.add_argument("--bias", type=float, default=0)
-    parser.add_argument("--last_bias", type=float, default=0)
-    parser.add_argument("--var_bias", type=float, default=0)
-    parser.add_argument("--L", type=int)
-    parser.add_argument("--h", type=int, required=True)
-    parser.add_argument("--mix_angle", type=float, default=45)
-    parser.add_argument("--cv_L1", type=int, default=2)
-    parser.add_argument("--cv_L2", type=int, default=2)
-    parser.add_argument("--cv_h_base", type=float, default=1)
-    parser.add_argument("--cv_fsz", type=int, default=5)
-    parser.add_argument("--cv_pad", type=int, default=1)
-    parser.add_argument("--cv_stride_first", type=int, default=1)
-
-    parser.add_argument("--init_kernel", type=int, default=0)
-    parser.add_argument("--init_kernel_ptr", type=int, default=0)
-    parser.add_argument("--regular", type=int, default=1)
-    parser.add_argument('--running_kernel', nargs='+', type=float)
-    parser.add_argument("--final_kernel", type=int, default=0)
-    parser.add_argument("--final_kernel_ptr", type=int, default=0)
-    parser.add_argument("--final_headless", type=int, default=0)
-    parser.add_argument("--final_headless_ptr", type=int, default=0)
-    parser.add_argument("--init_features_ptr", type=int, default=0)
-    parser.add_argument("--final_features", type=int, default=0)
-    parser.add_argument("--final_features_ptr", type=int, default=0)
-    parser.add_argument("--train_kernel", type=int, default=1)
-    parser.add_argument("--store_kernel", type=int, default=0)
-    parser.add_argument("--delta_kernel", type=int, default=0)
-    parser.add_argument("--stretch_kernel", type=int, default=0)
-
-    parser.add_argument("--save_outputs", type=int, default=0)
-    parser.add_argument("--save_state", type=int, default=0)
-    parser.add_argument("--save_weights", type=int, default=0)
 
     parser.add_argument("--alpha", type=float, required=True)
-    parser.add_argument("--f0", type=int, default=1)
-
-    parser.add_argument("--tau_over_h", type=float, default=0.0)
-    parser.add_argument("--tau_over_h_kernel", type=float)
-    parser.add_argument("--tau_alpha_crit", type=float)
-
-    parser.add_argument("--temperature", type=float, default=0.0)
-    parser.add_argument("--batch_min", type=int, default=1)
-    parser.add_argument("--batch_max", type=int, default=None)
-    parser.add_argument("--dt_amp", type=float, default=1.1)
-    parser.add_argument("--dt_dam", type=float, default=1.1**3)
 
     parser.add_argument("--max_wall", type=float, required=True)
-    parser.add_argument("--max_wall_kernel", type=float)
-    parser.add_argument("--wall_max_early_stopping", type=float)
-    parser.add_argument("--chunk", type=int)
-    parser.add_argument("--max_dgrad", type=float, default=1e-4)
-    parser.add_argument("--max_dout", type=float, default=1e-1)
 
     parser.add_argument("--loss", type=str, default="softhinge")
-    parser.add_argument("--loss_beta", type=float, default=20.0)
-    parser.add_argument("--loss_margin", type=float, default=1.0)
-    parser.add_argument("--stop_margin", type=float, default=1.0)
-    parser.add_argument("--stop_frac", type=float, default=1.0)
     parser.add_argument("--bs", type=int)
-
-    parser.add_argument("--ckpt_step", type=int, default=100)
-    parser.add_argument("--ckpt_tau", type=float, default=1e4)
 
     parser.add_argument("--output", type=str, required=True)
     args = parser.parse_args()
@@ -700,15 +635,6 @@ def main():
 
     if args['pte'] is None:
         args['pte'] = args['ptr']
-
-    if args['chunk'] is None:
-        args['chunk'] = max(args['ptr'], args['pte'], args['ptk'], 100000)
-
-    if args['max_wall_kernel'] is None:
-        args['max_wall_kernel'] = args['max_wall']
-
-    if args['tau_over_h_kernel'] is None:
-        args['tau_over_h_kernel'] = args['tau_over_h']
 
     if args['seed_init'] == -1:
         args['seed_init'] = args['seed_trainset']
