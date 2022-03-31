@@ -190,6 +190,13 @@ def get_normalized_dataset(dataset, ps, seeds, d=0, params=None):
         s += seed + 1
         torch.manual_seed(s)
         x = torch.randn(p, d, dtype=torch.float64)
+        if dataset == 'toy_random':
+            covariance_V = torch.ones(d)
+            beta = torch.zeros(d)
+            beta[0] = 1
+            if d>10: covariance_V = torch.cat((torch.ones(10),torch.ones(d-10)*0.1))
+            x = x*covariance_V
+            y = torch.sign(beta@x.T)
         if dataset == 'stripe':
             y = (x[:, 0] > -0.3) * (x[:, 0] < 1.18549)
         if dataset == 'sphere':

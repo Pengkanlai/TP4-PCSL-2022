@@ -1,5 +1,6 @@
 from .basics import *  # noqa
 from .mnas import *  # noqa
+from models import *
 
 
 class _SplitEval(torch.nn.Module):
@@ -42,7 +43,15 @@ def init_arch(datasets, **args):
 
     torch.manual_seed(args['seed_init'])
 
-    if args['arch'] == 'fc':
+    if args['arch'] == 'linear':
+        datasets = [x.flatten(1) for x in datasets]
+        f = linear(datasets[0].size(1))
+
+    elif args['arch'] == 'diagonal_linear':
+        datasets = [x.flatten(1) for x in datasets]
+        f = linear(datasets[0].size(1))
+
+    elif args['arch'] == 'fc':
         assert args['L'] is not None
         datasets = [x.flatten(1) for x in datasets]
         f = FC(datasets[0].size(1), args['h'], 1, args['L'], act, args['bias'], args['last_bias'], args['var_bias'])

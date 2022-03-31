@@ -11,8 +11,10 @@ from time import perf_counter
 import torch
 #from gradientflow import gradientflow_backprop, gradientflow_kernel, gradientflow_backprop_sgd
 
-#from arch import init_arch
-#from dataset import get_binary_dataset
+from train import train_model
+
+from arch import init_arch
+from dataset import get_binary_dataset
 #from kernels import compute_kernels, eigenvectors, kernel_intdim
 
 
@@ -158,6 +160,21 @@ def run_kernel(prefix, args, ktrtr, ktetr, ktete, xtr, ytr, xte, yte):
         yield out
         if stop:
             break
+
+
+def run_sgd(args, f_init, xtr, ytr, xte, yte):
+    
+    with torch.no_grad():
+        ote0 = f_init(xte)
+        otr0 = f_init(xtr)
+
+    if args['f0'] == 0:
+        ote0 = torch.zeros_like(ote0)
+        otr0 = torch.zeros_like(otr0)
+
+    # wall = perf_counter()
+    data = train_model(args['dt'], args['bs'], xtr,ytr, args['loss'], f_init, True, **args)
+    yield f_init, data 
 
 
 def run_regular(args, f_init, xtr, ytr, xte, yte):
@@ -559,7 +576,7 @@ def run_exp(args, f0, xtr, ytr, xtk, ytk, xte, yte):
     yield run
 
 
-def init(args):
+def initialization(args):
     torch.backends.cudnn.benchmark = True
     if args['dtype'] == 'float64':
         torch.set_default_dtype(torch.float64)
@@ -607,21 +624,70 @@ def main():
     parser.add_argument("--seed_init", type=int, default=0)
     parser.add_argument("--seed_testset", type=int, default=0, help="determines the testset, will affect the kernelset and trainset as well")
     parser.add_argument("--seed_trainset", type=int, default=0, help="determines the trainset")
+    parser.add_argument("--seed_kernelset", type=int, default=0, help="determines the kernelset, will affect the trainset as well")
+
+    parser.add_argument("--init_kernel", type=int, default=0)
+    parser.add_argument("--init_kernel_ptr", type=int, default=0)
+    parser.add_argument("--regular", type=int, default=1)
+    parser.add_argument('--running_kernel', nargs='+', type=float)
+    parser.add_argument("--final_kernel", type=int, default=0)
+    parser.add_argument("--final_kernel_ptr", type=int, default=0)
+    parser.add_argument("--final_headless", type=int, default=0)
+    parser.add_argument("--final_headless_ptr", type=int, default=0)
+    parser.add_argument("--init_features_ptr", type=int, default=0)
+    parser.add_argument("--final_features", type=int, default=0)
+    parser.add_argument("--final_features_ptr", type=int, default=0)
+    parser.add_argument("--train_kernel", type=int, default=1)
+    parser.add_argument("--store_kernel", type=int, default=0)
+    parser.add_argument("--delta_kernel", type=int, default=0)
+    parser.add_argument("--stretch_kernel", type=int, default=0)
 
     parser.add_argument("--dataset", type=str, required=True)
     parser.add_argument("--ptr", type=int, required=True)
     parser.add_argument("--pte", type=int)
+    parser.add_argument("--ptk", type=int)
     parser.add_argument("--d", type=int)
+    parser.add_argument("--data_param1", type=int,
+                        help="Sphere dimension if dataset = Cylinder."
+                        "Total number of cells, if dataset = sphere_grid. "
+                        "n0 if dataset = signal_1d.")
+    parser.add_argument("--data_param2", type=float,
+                        help="Stretching factor for non-spherical dimensions if dataset = cylinder."
+                        "Number of bins in theta, if dataset = sphere_grid.")
 
     parser.add_argument("--arch", type=str, required=True)
+    parser.add_argument("--act", type=str, required=True)
     parser.add_argument("--bias", type=float, default=0)
+    parser.add_argument("--act_beta", type=float, default=1.0)
+    parser.add_argument("--last_bias", type=float, default=0)
+    parser.add_argument("--var_bias", type=float, default=0)
+    parser.add_argument("--h", type=int, required=True)
 
     parser.add_argument("--alpha", type=float, required=True)
+    parser.add_argument("--f0", type=int, default=1)
+
+    parser.add_argument("--tau_over_h", type=float, default=0.0)
+    parser.add_argument("--tau_over_h_kernel", type=float)
+    parser.add_argument("--tau_alpha_crit", type=float)
 
     parser.add_argument("--max_wall", type=float, required=True)
+    parser.add_argument("--max_wall_kernel", type=float)
+    parser.add_argument("--wall_max_early_stopping", type=float)
+    parser.add_argument("--chunk", type=int)
+    parser.add_argument("--max_dgrad", type=float, default=1e-4)
+    parser.add_argument("--max_dout", type=float, default=1e-1)
 
     parser.add_argument("--loss", type=str, default="softhinge")
     parser.add_argument("--bs", type=int)
+
+    parser.add_argument("--temperature", type=float, default=0.0)
+    parser.add_argument("--batch_min", type=int, default=1)
+    parser.add_argument("--batch_max", type=int, default=None)
+    parser.add_argument("--dt_amp", type=float, default=1.1)
+    parser.add_argument("--dt_dam", type=float, default=1.1**3)
+
+    parser.add_argument("--ckpt_step", type=int, default=100)
+    parser.add_argument("--ckpt_tau", type=float, default=1e4)
 
     parser.add_argument("--output", type=str, required=True)
     args = parser.parse_args()
@@ -636,6 +702,15 @@ def main():
     if args['pte'] is None:
         args['pte'] = args['ptr']
 
+    if args['chunk'] is None:
+        args['chunk'] = max(args['ptr'], args['pte'], args['ptk'], 100000)
+
+    if args['max_wall_kernel'] is None:
+        args['max_wall_kernel'] = args['max_wall']
+
+    if args['tau_over_h_kernel'] is None:
+        args['tau_over_h_kernel'] = args['tau_over_h']
+
     if args['seed_init'] == -1:
         args['seed_init'] = args['seed_trainset']
 
@@ -643,17 +718,20 @@ def main():
         pickle.dump(args,  handle)
 
     saved = False
-    try:
-        for data in execute(args):
-            data['git'] = git
-            with open(args['output'], 'wb') as handle:
-                pickle.dump(args, handle)
-                pickle.dump(data, handle)
-            saved = True
-    except:
-        if not saved:
-            os.remove(args['output'])
-        raise
+
+    f_init, xtr, ytr, itr, xtk, ytk, itk, xte, yte, ite = initialization(args)
+    data = run_sgd(args, f_init, xtr, ytr, xte, yte)
+    # try:
+    #     for data in execute(args):
+    #         data['git'] = git
+    #         with open(args['output'], 'wb') as handle:
+    #             pickle.dump(args, handle)
+    #             pickle.dump(data, handle)
+    #         saved = True
+    # except:
+    #     if not saved:
+    #         os.remove(args['output'])
+    #     raise
 
 
 if __name__ == "__main__":
