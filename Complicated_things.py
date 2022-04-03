@@ -27,6 +27,18 @@ def loss_func_prime(args, f, y):
         return -(args['loss_margin'] - args['alpha'] * f * y).relu() * y
 
 
+def execute(args):
+    f, xtr, ytr, itr, xtk, ytk, itk, xte, yte, ite = initialization(args)
+
+    torch.manual_seed(0)
+    for run in run_exp(args, f, xtr, ytr, xtk, ytk, xte, yte):
+        run['dataset'] = {
+            'test': ite.cpu().clone(),
+            'kernel': itk.cpu().clone(),
+            'train': itr.cpu().clone(),
+        }
+        yield run
+
 def run_kernel(prefix, args, ktrtr, ktetr, ktete, xtr, ytr, xte, yte):
     assert args['f0'] == 1
 
@@ -146,7 +158,7 @@ def run_kernel(prefix, args, ktrtr, ktetr, ktete, xtr, ytr, xte, yte):
  
  
  
- def run_regular(args, f_init, xtr, ytr, xte, yte):
+def run_regular(args, f_init, xtr, ytr, xte, yte):
 
     with torch.no_grad():
         ote0 = f_init(xte)

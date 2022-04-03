@@ -52,19 +52,6 @@ def initialization(args):
     return f, xtr, ytr, itr, xtk, ytk, itk, xte, yte, ite
 
 
-def execute(args):
-    f, xtr, ytr, itr, xtk, ytk, itk, xte, yte, ite = init(args)
-
-    torch.manual_seed(0)
-    for run in run_exp(args, f, xtr, ytr, xtk, ytk, xte, yte):
-        run['dataset'] = {
-            'test': ite.cpu().clone(),
-            'kernel': itk.cpu().clone(),
-            'train': itr.cpu().clone(),
-        }
-        yield run
-
-
 def main():
     git = {
         'log': subprocess.getoutput('git log --format="%H" -n 1 -z'),
@@ -78,7 +65,7 @@ def main():
     parser.add_argument("--seed_init", type=int, default=0)
     parser.add_argument("--seed_testset", type=int, default=0, help="determines the testset, will affect the kernelset and trainset as well")
     parser.add_argument("--seed_trainset", type=int, default=0, help="determines the trainset")
-     parser.add_argument("--seed_kernelset", type=int, default=0, help="determines the kernelset, will affect the trainset as well")
+    parser.add_argument("--seed_kernelset", type=int, default=0, help="determines the kernelset, will affect the trainset as well")
    
     parser.add_argument("--dataset", type=str, required=True)
     parser.add_argument("--ptr", type=int, required=True)
@@ -94,19 +81,18 @@ def main():
                         "Number of bins in theta, if dataset = sphere_grid.")
     
     parser.add_argument("--arch", type=str, required=True)
+    parser.add_argument("--act", type=str, required=True)
+    parser.add_argument("--act_beta", type=float, default=1.0)
     parser.add_argument("--bias", type=float, default=0)
 
     parser.add_argument("--alpha", type=float, required=True)
+    parser.add_argument("--f0", type=int, default=1)
     
+    parser.add_argument("--chunk", type=int)
+
     parser.add_argument("--loss", type=str, default="softhinge")
     parser.add_argument("--bs", type=int)
-
-    parser.add_argument("--temperature", type=float, default=0.0)
-    parser.add_argument("--batch_min", type=int, default=1)
-    parser.add_argument("--batch_max", type=int, default=None)
-    parser.add_argument("--dt_amp", type=float, default=1.1)
-    parser.add_argument("--dt_dam", type=float, default=1.1**3)
-
+    
     parser.add_argument("--output", type=str, required=True)
     args = parser.parse_args()
     args = args.__dict__
@@ -120,6 +106,9 @@ def main():
     if args['pte'] is None:
         args['pte'] = args['ptr']
 
+    if args['ptk'] is None:
+        args['ptk'] = args['ptr']
+
     if args['seed_init'] == -1:
         args['seed_init'] = args['seed_trainset']
 
@@ -130,19 +119,7 @@ def main():
 
     f_init, xtr, ytr, itr, xtk, ytk, itk, xte, yte, ite = initialization(args)
     data = run_sgd(args, f_init, xtr, ytr, xte, yte)
-    
-    # try:
-    #     for data in execute(args):
-    #         data['git'] = git
-    #         with open(args['output'], 'wb') as handle:
-    #             pickle.dump(args, handle)
-    #             pickle.dump(data, handle)
-    #         saved = True
-    # except:
-    #     if not saved:
-    #         os.remove(args['output'])
-    #     raise
 
-
+   
 if __name__ == "__main__":
     main()
