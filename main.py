@@ -92,6 +92,7 @@ def main():
 
     parser.add_argument("--loss", type=str, default="softhinge")
     parser.add_argument("--bs", type=int)
+    parser.add_argument("--dt", type=float)
     
     parser.add_argument("--output", type=str, required=True)
     args = parser.parse_args()
@@ -120,6 +121,17 @@ def main():
     f_init, xtr, ytr, itr, xtk, ytk, itk, xte, yte, ite = initialization(args)
     data = run_sgd(args, f_init, xtr, ytr, xte, yte)
 
+    try:
+        for data in run_sgd(args, f_init, xtr, ytr, xte, yte):
+            data['git'] = git
+            with open(args['output'], 'wb') as handle:
+                pickle.dump(args, handle)
+                pickle.dump(data, handle)
+            saved = True
+    except:
+        if not saved:
+            os.remove(args['output'])
+        raise
    
 if __name__ == "__main__":
     main()
