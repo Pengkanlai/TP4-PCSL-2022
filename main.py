@@ -9,7 +9,7 @@ from functools import partial
 from time import perf_counter
 
 import torch
-import numpy as np
+
 from train import train_model
 from arch import init_arch
 from dataset import get_binary_dataset
