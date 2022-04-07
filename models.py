@@ -1,24 +1,38 @@
-from audioop import bias
+# from audioop import bias
 import torch
-import torch.nn as nn
+from torch import nn
 
 
-class linear(nn.Module):
-    def __init__(self, d, bias=False):
-        super(linear, self).__init__()
-        if bias:
-            self.linear_layer = nn.Linear(d, 1, bias=True) # an affine operation: y = Wx + b
-        else:
-            self.linear_layer = nn.Linear(d, 1, bias=False) # an homogenous linear operation: y = Wx
+class testmod(nn.Module):
+    def __init__(self, d):
+        super(testmod, self).__init__()
+        self.layer = nn.Linear(d,1)
 
     def forward(self, x):
-        x = self.linear_layer(x)
-        return x
+        return self.layer(x)
+
+
+class linear_model(nn.Module):
+    def __init__(self, d, bias=False):
+        super().__init__()
+        if bias:
+            self.linear_stack = nn.Sequential(
+                nn.Linear(d, 1, bias=True) # an affine operation: y = Wx + b
+            )
+            # self.linear_layer = nn.Linear(d, 1, bias=True) # an affine operation: y = Wx + b
+        else:
+            self.linear_stack = nn.Sequential(
+                nn.Linear(d, 1, bias=False) # an affine operation: y = Wx + b
+            )
+            # self.linear_layer = nn.Linear(d, 1, bias=False) # an homogenous linear operation: y = Wx
+
+    def forward(self, x):
+        return self.linear_stack(x)
 
 
 class diagonal_linear(nn.Module):
     def __init__(self, d):
-        super(linear, self).__init__()
+        super(diagonal_linear, self).__init__()
         self.linear1 = nn.Linear(d, 1, bias=False)
         self.linear2 = nn.Linear(d, 1, bias=False)
         self.linear3 = nn.Linear(d, 1, bias=False)

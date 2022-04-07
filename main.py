@@ -27,6 +27,7 @@ def run_sgd(args, f_init, xtr, ytr, xte, yte):
 
     # wall = perf_counter()
     data = train_model(xtr,ytr, args['loss'], f_init, True, **args)
+    # dictionary with all interesting observables
     yield f_init, data 
 
     
@@ -42,7 +43,7 @@ def initialization(args):
         (args['pte'], args['ptk'], args['ptr']),
         (args['seed_testset'] + args['pte'], args['seed_kernelset'] + args['ptk'], args['seed_trainset'] + args['ptr']),
         args['d'],
-        (args['data_param1'], args['data_param2']),
+        None,
         args['device'],
         torch.get_default_dtype()
     )
@@ -124,7 +125,7 @@ def main():
 
     try:
         for data in run_sgd(args, f_init, xtr, ytr, xte, yte):
-            data['git'] = git
+            # data['git'] = git
             with open(args['output'], 'wb') as handle:
                 pickle.dump(args, handle)
                 pickle.dump(data, handle)

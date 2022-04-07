@@ -61,6 +61,7 @@ def get_binary_dataset(dataset, ps, seeds, d, params=None, device=None, dtype=No
 
     outs = []
     for x, y, i in sets:
+        print(device)
         x = x.to(device=device, dtype=dtype)
 
         assert len(y.unique()) % 2 == 0
@@ -192,8 +193,8 @@ def get_normalized_dataset(dataset, ps, seeds, d=0, params=None):
         x = torch.randn(p, d, dtype=torch.float64)
         if dataset == 'toy_random':
             covariance_V = torch.ones(d)
-            beta = torch.zeros(d)
-            beta[0] = 1
+            beta = torch.zeros(d, dtype=torch.float64)
+            beta[0] = 1.0
             if d>10: covariance_V = torch.cat((torch.ones(10),torch.ones(d-10)*0.1))
             x = x*covariance_V
             y = torch.sign(beta@x.T)
