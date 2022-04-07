@@ -16,7 +16,7 @@ def loss_fun(type):
 
 def sgd_step(dt,bs,xtr,ytr,loss,model, gen, replacement=False):
     if replacement:
-        index = torch.randint(len(xtr), size=(bs,), generator=gen)
+        index = torch.randint(len(xtr), (bs,), generator=gen)
     else:
         index = torch.randperm(len(xtr), generator=gen)[:bs]
 
@@ -33,14 +33,14 @@ def sgd_step(dt,bs,xtr,ytr,loss,model, gen, replacement=False):
         p._add(-dt * p.grad())
 
 
-def train_model(dt,bs,xtr,ytr,loss_type,model, replacement, **args):
+def train_model(xtr,ytr,loss_type,model, replacement, **args):
     gen = torch.Generator(device="cpu").manual_seed(args['seed_batch'])
     loss = loss_fun(loss_type)
     nb_iterations = 1000
     data = []
 
     for i in range(nb_iterations):
-        sgd_step(dt,bs,xtr,ytr,loss,model, gen, replacement)
+        sgd_step(args['dt'],args['bs'],xtr,ytr,loss,model, gen, replacement)
         
         y_pred = model(xtr)
         Ltr = loss(y_pred, ytr)

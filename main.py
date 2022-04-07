@@ -26,7 +26,7 @@ def run_sgd(args, f_init, xtr, ytr, xte, yte):
         otr0 = torch.zeros_like(otr0)
 
     # wall = perf_counter()
-    data = train_model(args['dt'], args['bs'], xtr,ytr, args['loss'], f_init, True, **args)
+    data = train_model(xtr,ytr, args['loss'], f_init, True, **args)
     yield f_init, data 
 
     
@@ -66,6 +66,7 @@ def main():
     parser.add_argument("--seed_testset", type=int, default=0, help="determines the testset, will affect the kernelset and trainset as well")
     parser.add_argument("--seed_trainset", type=int, default=0, help="determines the trainset")
     parser.add_argument("--seed_kernelset", type=int, default=0, help="determines the kernelset, will affect the trainset as well")
+    parser.add_argument("--seed_batch", type=int, default=0)
    
     parser.add_argument("--dataset", type=str, required=True)
     parser.add_argument("--ptr", type=int, required=True)
