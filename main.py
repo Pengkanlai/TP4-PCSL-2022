@@ -29,14 +29,23 @@ def run_sgd(args, f_init, xtr, ytr, xte, yte):
     # wall = perf_counter()
     data = {}
     data['Train_loss'] = []
+    data['Test_loss'] = []
     # dictionary with all interesting observables
 
-    for model in train_model(xtr, ytr, args['loss'], f_init, True, **args):
+    # loop over the predictors
+    for model in train_model(xtr, ytr, xte, yte, args['loss'], f_init, True, **args):
         loss = loss_fun(args['loss'])
         y_pred = model(xtr)
         Ltr = loss(y_pred, ytr)
         data['Train_loss'].append(Ltr.item())
+        # calculate and save train loss in the dictionary
         if Ltr.item == 0: break
+        # stop training until train loss reaches 0
+        
+    y_pred_test = model(xte)
+    Lte = loss(y_pred_test, yte) 
+    data['Test_loss'].append(Lte.item())
+    # calculate and save test loss in the dictionary
     yield f_init, data 
 
     

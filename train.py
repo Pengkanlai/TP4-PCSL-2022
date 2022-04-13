@@ -14,7 +14,7 @@ def loss_fun(type):
     elif type == 'hinge':
         return hinge
 
-def sgd_step(dt,bs,xtr,ytr,loss,model, gen, replacement=False):
+def sgd_step(dt, bs, xtr, ytr, loss, model, gen, replacement=False):
     if replacement:
         index = torch.randint(len(xtr), (bs,), generator=gen)
     else:
@@ -35,6 +35,7 @@ def sgd_step(dt,bs,xtr,ytr,loss,model, gen, replacement=False):
 
 def train_model(xtr, ytr, xte, yte, loss_type, model, replacement, **args):
     gen = torch.Generator(device="cpu").manual_seed(args['seed_batch'])
+    loss = loss_fun(loss_type)
 
     nb_iterations = 1000
     checkpoint_steps = 10
@@ -46,12 +47,8 @@ def train_model(xtr, ytr, xte, yte, loss_type, model, replacement, **args):
         steps += checkpoint_steps
 
         yield model
+        # yield the predictor every 10 steps
     
-    # steps = 0
-    # for i in range(checkpoint_steps):
-    #     sgd_step(args['dt'],args['bs'], xtr, ytr, loss, model, gen, replacement)
-        
-    # yield model, steps+checkpoint_steps
 
 
     
