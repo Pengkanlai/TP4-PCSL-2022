@@ -11,6 +11,7 @@ from time import perf_counter
 import torch
 
 from train import train_model
+from train import loss_fun
 from arch import init_arch
 from dataset import get_binary_dataset
 
@@ -26,8 +27,16 @@ def run_sgd(args, f_init, xtr, ytr, xte, yte):
         otr0 = torch.zeros_like(otr0)
 
     # wall = perf_counter()
-    data = train_model(xtr,ytr, args['loss'], f_init, True, **args)
+    data = {}
+    data['Train_loss'] = []
     # dictionary with all interesting observables
+
+    for model in train_model(xtr, ytr, args['loss'], f_init, True, **args):
+        loss = loss_fun(args['loss'])
+        y_pred = model(xtr)
+        Ltr = loss(y_pred, ytr)
+        data['Train_loss'].append(Ltr.item())
+        if Ltr.item == 0: break
     yield f_init, data 
 
     
