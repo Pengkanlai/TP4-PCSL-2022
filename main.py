@@ -39,6 +39,7 @@ def run_sgd(args, f_init, xtr, ytr, xte, yte):
         Ltr = loss(y_pred, ytr)
         data['Train_loss'].append(Ltr.item())
         # calculate and save train loss in the dictionary
+        print('Train loss: {:.4f}'.format(Ltr.item()))
         if Ltr.item == 0: break
         # stop training until train loss reaches 0
         
