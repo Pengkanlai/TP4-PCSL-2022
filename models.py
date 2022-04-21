@@ -16,18 +16,21 @@ class linear_model(nn.Module):
     def __init__(self, d, bias=False):
         super().__init__()
         if bias:
-            self.linear_stack = nn.Sequential(
-                nn.Linear(d, 1, bias=True) # an affine operation: y = Wx + b
-            )
-            # self.linear_layer = nn.Linear(d, 1, bias=True) # an affine operation: y = Wx + b
+            # self.linear_stack = nn.Sequential(
+            #     nn.Linear(d, 1, bias=True) # an affine operation: y = Wx + b
+            # )
+            self.linear_layer = nn.Linear(d, 1, bias=True) # an affine operation: y = Wx + b
+            nn.init.normal_(self.linear_layer.weight, mean=0.0, std=1.0)
+            nn.init.normal_(self.linear_layer.bias, mean=0.0, std=1.0)
         else:
-            self.linear_stack = nn.Sequential(
-                nn.Linear(d, 1, bias=False) # an affine operation: y = Wx + b
-            )
-            # self.linear_layer = nn.Linear(d, 1, bias=False) # an homogenous linear operation: y = Wx
+            # self.linear_stack = nn.Sequential(
+            #     nn.Linear(d, 1, bias=False) # an affine operation: y = Wx + b
+            # )
+            self.linear_layer = nn.Linear(d, 1, bias=False) # an homogenous linear operation: y = Wx
+            nn.init.normal_(self.linear_layer.weight, mean=0.0, std=1.0)
 
     def forward(self, x):
-        return self.linear_stack(x)
+        return self.linear_layer(x/(x.shape[1]**0.5)).flatten()
 
 
 class diagonal_linear(nn.Module):

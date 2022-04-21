@@ -32,15 +32,22 @@ def run_sgd(args, f_init, xtr, ytr, xte, yte):
     data['Test_loss'] = []
     # dictionary with all interesting observables
 
+    loss = loss_fun(args['loss'])
+    model = f_init
+    # for p in model.parameters():
+    #     print("p.requires_grad:", p.requires_grad)
+    #     p.retain_grad()
     # loop over the predictors
-    for model in train_model(xtr, ytr, xte, yte, args['loss'], f_init, True, **args):
-        loss = loss_fun(args['loss'])
+    for internals in train_model(xtr, ytr, xte, yte, args['loss'], model, True, **args):
+        steps, model, grad_norm = internals
         y_pred = model(xtr)
         Ltr = loss(y_pred, ytr)
         data['Train_loss'].append(Ltr.item())
         # calculate and save train loss in the dictionary
-        print('Train loss: {:.4f}'.format(Ltr.item()))
-        if Ltr.item == 0: break
+
+        print('Step: {}, Train loss: {}, grad_norm: {}'.format(steps, Ltr.item(), grad_norm))
+        print(Ltr.item() < 1e-6)
+        if Ltr.item() < 1e-6: break
         # stop training until train loss reaches 0
         
     y_pred_test = model(xte)
@@ -105,6 +112,10 @@ def main():
     parser.add_argument("--act", type=str, required=True)
     parser.add_argument("--act_beta", type=float, default=1.0)
     parser.add_argument("--bias", type=float, default=0)
+    parser.add_argument("--last_bias", type=float, default=0)
+    parser.add_argument("--var_bias", type=float, default=0)
+    parser.add_argument("--L", type=int, default=None)
+    parser.add_argument("--h", type=int, default=None)
 
     parser.add_argument("--alpha", type=float, required=True)
     parser.add_argument("--f0", type=int, default=1)

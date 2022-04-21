@@ -200,6 +200,8 @@ def get_normalized_dataset(dataset, ps, seeds, d=0, params=None):
             y = torch.sign(beta@x.T)
         if dataset == 'stripe':
             y = (x[:, 0] > -0.3) * (x[:, 0] < 1.18549)
+        if dataset == 'sign':
+            y = (x[:, 0] > 0.0)
         if dataset == 'sphere':
             r = x.norm(dim=1)
             y = r**2 > d * (1 - 2 / (9 * d))**3
