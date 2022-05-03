@@ -30,6 +30,7 @@ def run_sgd(args, f_init, xtr, ytr, xte, yte):
     data = {}
     data['Train_loss'] = []
     data['Test_loss'] = []
+    data['Test_error'] = 0.0
     # dictionary with all interesting observables
 
     loss = loss_fun(args['loss'])
@@ -49,10 +50,15 @@ def run_sgd(args, f_init, xtr, ytr, xte, yte):
         print(Ltr.item() < 1e-6)
         if Ltr.item() < 1e-6: break
         # stop training until train loss reaches 0
-        
+    
     y_pred_test = model(xte)
-    Lte = loss(y_pred_test, yte) 
-    data['Test_loss'].append(Lte.item())
+    for i in range(xte.size(0)):
+        if y_pred_test[i] != yte[i]:
+            data['Test_error'] += 1.0
+
+    #y_pred_test = model(xte)
+    #Lte = loss(y_pred_test, yte) 
+    #data['Test_loss'].append(Lte.item())
     # calculate and save test loss in the dictionary
     yield f_init, data 
 
