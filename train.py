@@ -33,8 +33,6 @@ def sgd_step(dt, bs, xtr, ytr, loss, model, gen, replacement=False):
 
     model.zero_grad()
     # print(f"{loss_batch.item()}")
-    # for p in model.parameters():
-    #     print(f"{p.grad.data.norm()}")
 
     loss_batch.backward()
     grad_norm = 0
@@ -58,21 +56,17 @@ def train_model(xtr, ytr, xte, yte, loss_type, model, replacement, **args):
     gen = torch.Generator(device="cpu").manual_seed(args['seed_batch'])
     loss = loss_fun(loss_type)
 
-    nb_iterations = 100000
+    max_steps = 100000
     checkpoint_steps = 1000
 
-    count_steps = 0
-    for steps in range(nb_iterations):
-        for i in range(checkpoint_steps):
-            model, grad_norm = sgd_step(args['dt'],args['bs'], xtr, ytr, loss, model, gen, replacement)
+    ckpt_step = 0
+    for steps in range(max_steps):
+        model, grad_norm = sgd_step(args['dt'],args['bs'], xtr, ytr, loss, model, gen, replacement)
         
-        # for p in model.parameters():
-        #     print(p)
-        # print(f"{model(xtr)*ytr}")
-        count_steps += checkpoint_steps
-        internals = [count_steps, model, grad_norm]
-        yield internals
-        # yield the predictor and other quantities every 10 steps
+        if steps - ckpt_step > checkpoint_steps:
+            ckpt_step = steps
+            yield steps, model, grad_norm, args['dt']*steps
+            # yield the predictor and other quantities every checkpoint_steps steps
     
 
 

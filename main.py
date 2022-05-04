@@ -15,6 +15,35 @@ from train import loss_fun
 from arch import init_arch
 from dataset import get_binary_dataset
 
+
+
+def initialize_data():
+    data = {}
+    data['step'] = []
+    data['t'] = []
+    data['Train_loss'] = []
+    data['Test_loss'] = []
+    data['Train_error'] = []
+    data['Test_error'] = []
+    data['Train_grad_norm'] = []
+    # dictionary with all interesting observables
+    return data
+
+def compute_observables(steps, model, grad_norm, xtr, ytr, xte, yte, loss, **args):
+    obs = {}
+    y_pred_tr = model(xtr)
+    y_pred_te = model(xte)
+
+    obs['step'] = steps
+    obs['t'] = steps * args['dt']
+    obs['Train_loss'] = loss(y_pred_tr, ytr).item()
+    obs['Test_loss'] = loss(y_pred_te, yte).item()
+    obs['Train_error'] = (ytr*y_pred_tr < 0).mean()
+    obs['Test_error'] = (yte*y_pred_te < 0).mean()
+    obs['Train_grad_norm'] = grad_norm
+    # dictionary with all interesting observables
+    return obs
+
   
 def run_sgd(args, f_init, xtr, ytr, xte, yte):
     
@@ -27,40 +56,41 @@ def run_sgd(args, f_init, xtr, ytr, xte, yte):
         otr0 = torch.zeros_like(otr0)
 
     # wall = perf_counter()
-    data = {}
-    data['Train_loss'] = []
-    data['Test_loss'] = []
-    data['Test_error'] = 0.0
-    # dictionary with all interesting observables
 
+    # initialize
     loss = loss_fun(args['loss'])
     model = f_init
+    data = initialize_data() # dictionary with all interesting observables
+
+    # compute and save things at initialization
+    obs = compute_observables(0, model, None, xtr, ytr, xte, yte, loss, **args) # compute things for the current predictor
+    for key in data.keys():
+        data[key].append(obs[key])
+
+    # print on screen
+    print('Step: {}, Train loss: {}, grad_norm: {}, Test loss: {}'.format(obs['step'], obs['Train_loss'], obs['Train_grad_norm'], obs['Test_loss']))
+
     # for p in model.parameters():
     #     print("p.requires_grad:", p.requires_grad)
     #     p.retain_grad()
     # loop over the predictors
+
     for internals in train_model(xtr, ytr, xte, yte, args['loss'], model, True, **args):
         steps, model, grad_norm = internals
-        y_pred = model(xtr)
-        Ltr = loss(y_pred, ytr)
-        data['Train_loss'].append(Ltr.item())
-        # calculate and save train loss in the dictionary
 
-        print('Step: {}, Train loss: {}, grad_norm: {}'.format(steps, Ltr.item(), grad_norm))
-        print(Ltr.item() < 1e-6)
-        if Ltr.item() < 1e-6: break
-        # stop training until train loss reaches 0
-    
-    y_pred_test = model(xte)
-    for i in range(xte.size(0)):
-        if y_pred_test[i] != yte[i]:
-            data['Test_error'] += 1.0
+        # compute things for the current predictor
+        obs = compute_observables(steps, model, grad_norm, xtr, ytr, xte, yte, loss, **args)
 
-    #y_pred_test = model(xte)
-    #Lte = loss(y_pred_test, yte) 
-    #data['Test_loss'].append(Lte.item())
-    # calculate and save test loss in the dictionary
-    yield f_init, data 
+        # save things in the dictionary
+        for key in data.keys():
+            data[key].append(obs[key])
+
+        # print on screen
+        print('Step: {}, Train loss: {}, grad_norm: {}, Test loss: {}'.format(obs['step'], obs['Train_loss'], obs['Train_grad_norm'], obs['Test_loss']))
+
+        yield data # return the dictionary with all interesting observables
+
+        if obs['Train_loss'] < 1e-6: break # stop training if train loss < threshold
 
     
 def initialization(args):
