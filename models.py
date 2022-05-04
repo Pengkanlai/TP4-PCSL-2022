@@ -34,16 +34,23 @@ class linear_model(nn.Module):
 
 
 class diagonal_linear(nn.Module):
-    def __init__(self, d):
+    def __init__(self, d, L, bias=False):
         super(diagonal_linear, self).__init__()
-        self.linear1 = nn.Linear(d, 1, bias=False)
-        self.linear2 = nn.Linear(d, 1, bias=False)
-        self.linear3 = nn.Linear(d, 1, bias=False)
-        for p1, p2, p3 in zip(self.linear1.parameters(), self.linear2.parameters(), self.linear3.paramteres()):
-            p3 = p1*p2
+        self.L = L
+        self.bias = bias
+        Wplus = torch.randn(d)
+        Wminus = torch.randn(d)
+        self.Wplus = nn.Parameter(Wplus)
+        self.Wminus = nn.Parameter(Wminus)
+        
+        if bias:
+            self.b = nn.Parameter(torch.randn(1))
+        else:
+            self.b = None
+        
 
     def forward(self, x):
-        for p1, p2, p3 in zip(self.linear1.parameters(), self.linear2.parameters(), self.linear3.paramteres()):
-            p3 = p1*p2
-        x = self.linear3(x)
-        return x
+        if self.bias:
+            return (x/(x.shape[1]**0.5)) @ (self.Wplus**self.L - self.Wminus**self.L) + self.b
+        else:
+            return (x/(x.shape[1]**0.5)) @ (self.Wplus**self.L - self.Wminus**self.L)

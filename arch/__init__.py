@@ -45,11 +45,12 @@ def init_arch(datasets, **args):
 
     if args['arch'] == 'linear':
         datasets = [x.flatten(1) for x in datasets]
-        f = linear_model(datasets[0].size(1))
+        f = linear_model(datasets[0].size(1), args['bias'])
 
     elif args['arch'] == 'diagonal_linear':
+        assert args['L'] is not None
         datasets = [x.flatten(1) for x in datasets]
-        f = diagonal_linear(datasets[0].size(1))
+        f = diagonal_linear(datasets[0].size(1), args['L'], args['bias'])
 
     elif args['arch'] == 'fc':
         assert args['L'] is not None

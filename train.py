@@ -57,22 +57,14 @@ def train_model(xtr, ytr, xte, yte, loss_type, model, replacement, **args):
     loss = loss_fun(loss_type)
 
     max_steps = 100000
-    checkpoint_steps = 1000
-
+    
+    checkpoint_steps = 1
     ckpt_step = 0
-    for steps in range(max_steps):
+    for steps in range(1,max_steps+1):
         model, grad_norm = sgd_step(args['dt'],args['bs'], xtr, ytr, loss, model, gen, replacement)
         
-        if steps - ckpt_step > checkpoint_steps:
+        if steps - ckpt_step >= checkpoint_steps:
             ckpt_step = steps
-            yield steps, model, grad_norm, args['dt']*steps
+            checkpoint_steps = 1 if steps <100 else int(steps/2)
+            yield steps, args['dt']*steps, model, grad_norm.item()
             # yield the predictor and other quantities every checkpoint_steps steps
-    
-
-
-    
- 
-  
- 
-    
-  
