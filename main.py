@@ -26,14 +26,23 @@ def initialize_data():
     data['Train_error'] = []
     data['Test_error'] = []
     data['Train_grad_norm'] = []
+    data['w_norm'] = []
+    data['dw'] = []
     # dictionary with all interesting observables
     return data
 
-def compute_observables(steps, time, model, grad_norm, xtr, ytr, xte, yte, loss, args):
+def compute_observables(steps, time, model, grad_norm, xtr, ytr, xte, yte, loss, args, f_init):
     obs = {}
     y_pred_tr = model(xtr)
     y_pred_te = model(xte)
 
+    w_norm = []
+    dw = []
+    with torch.no_grad():
+        for w,w0 in zip(model.parameters(), f_init.parameters()):
+            w_norm.append(w.norm().item())
+            dw.append((w-w0).norm().item())
+            
     obs['step'] = steps
     obs['t'] = time
     obs['Train_loss'] = loss(y_pred_tr, ytr).item()
@@ -41,6 +50,8 @@ def compute_observables(steps, time, model, grad_norm, xtr, ytr, xte, yte, loss,
     obs['Train_error'] = (ytr*y_pred_tr < 0).float().mean().item()
     obs['Test_error']  = (yte*y_pred_te < 0).float().mean().item()
     obs['Train_grad_norm'] = grad_norm
+    obs['w_norm'] = w_norm
+    obs['dw'] = dw
     # dictionary with all interesting observables
     return obs
 
@@ -59,11 +70,11 @@ def run_sgd(args, f_init, xtr, ytr, xte, yte):
 
     # initialize
     loss = loss_fun(args['loss'])
-    model = f_init
+    model = copy.deepcopy(f_init)
     data = initialize_data() # dictionary with all interesting observables
 
     # compute and save things at initialization
-    obs = compute_observables(0, 0.0, model, None, xtr, ytr, xte, yte, loss, args) # compute things for the current predictor
+    obs = compute_observables(0, 0.0, model, None, xtr, ytr, xte, yte, loss, args, f_init) # compute things for the current predictor
     for key in data.keys():
         data[key].append(obs[key])
 
@@ -79,7 +90,7 @@ def run_sgd(args, f_init, xtr, ytr, xte, yte):
         steps, time, model, grad_norm = internals
 
         # compute things for the current predictor
-        obs = compute_observables(steps, time, model, grad_norm, xtr, ytr, xte, yte, loss, args)
+        obs = compute_observables(steps, time, model, grad_norm, xtr, ytr, xte, yte, loss, args, f_init)
 
         # save things in the dictionary
         for key in data.keys():
