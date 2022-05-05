@@ -12,9 +12,11 @@ with (open(file_name, "rb")) as f:
         except EOFError:
             break
 
-#print(objects[1]['Train_loss'])
+#print(objects[1])
 
-x = np.linspace(0,12921,113)
+#nb_steps = len(objects[1]['step'])
+
+x = objects[1]['t']
 y = objects[1]['Train_loss']
 
 plt.plot(x,y)
