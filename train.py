@@ -1,20 +1,21 @@
 import torch
 from torch.nn.functional import relu
 import numpy as np
+from functools import partial
 
-def mse(y_pred, y):
-    return pow(y_pred-y,2).mean()
+def mse(alpha, y_pred, y):
+    return pow(alpha * y_pred-y,2).mean() / alpha
 
-def hinge(y_pred, y):
-    return relu(1-y_pred*y).mean()
+def hinge(alpha, y_pred, y):
+    return relu(1- alpha * y_pred * y).mean() / alpha
 
-def loss_fun(type):
+def loss_fun(alpha, type):
     if type == 'mean_squared':
-        return mse
+        return partial(mse, alpha)
     elif type == 'hinge':
-        return hinge
+        return partial(hinge, alpha)
 
-def sgd_step(dt, bs, xtr, ytr, loss, model, gen, replacement=False):
+def sgd_step(dt, bs, xtr, ytr, otr0, loss, model, gen, replacement=False):
     if replacement:
         index = torch.randint(len(xtr), (bs,), generator=gen)
     else:
@@ -22,8 +23,9 @@ def sgd_step(dt, bs, xtr, ytr, loss, model, gen, replacement=False):
 
     x = xtr[index]
     y = ytr[index]
+    o0 = otr0[index]
 
-    y_pred = model(x)
+    y_pred = model(x) - o0
     loss_batch = loss(y_pred, y)
     # print(loss_batch)
     loss_batch.retain_grad()
@@ -52,16 +54,15 @@ def sgd_step(dt, bs, xtr, ytr, loss, model, gen, replacement=False):
     return model, grad_norm
 
 
-def train_model(xtr, ytr, xte, yte, loss_type, model, replacement, **args):
+def train_model(xtr, ytr, otr0, xte, yte, ote0, loss, model, replacement, args):
     gen = torch.Generator(device="cpu").manual_seed(args['seed_batch'])
-    loss = loss_fun(loss_type)
 
     max_steps = 100000
     
     checkpoint_steps = 1
     ckpt_step = 0
     for steps in range(1,max_steps+1):
-        model, grad_norm = sgd_step(args['dt'],args['bs'], xtr, ytr, loss, model, gen, replacement)
+        model, grad_norm = sgd_step(args['dt'],args['bs'], xtr, ytr, otr0, loss, model, gen, replacement)
         
         if steps - ckpt_step >= checkpoint_steps:
             ckpt_step = steps
