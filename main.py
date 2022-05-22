@@ -141,8 +141,8 @@ def main():
     parser.add_argument("--dtype", type=str, default='float64')
 
     parser.add_argument("--seed_init", type=int, default=0)
-    parser.add_argument("--seed_testset", type=int, default=0, help="determines the testset, will affect the kernelset and trainset as well")
-    parser.add_argument("--seed_trainset", type=int, default=0, help="determines the trainset")
+    parser.add_argument("--seed_testset", type=int, default=-1, help="determines the testset, will affect the kernelset and trainset as well")
+    parser.add_argument("--seed_trainset", type=int, default=None, help="determines the trainset")
     parser.add_argument("--seed_kernelset", type=int, default=0, help="determines the kernelset, will affect the trainset as well")
     parser.add_argument("--seed_batch", type=int, default=0)
    
@@ -186,6 +186,9 @@ def main():
             args['device'] = 'cuda'
         else:
             args['device'] = 'cpu'
+
+    if args['seed_trainset'] is None:
+        args['seed_trainset'] = -int(args['seed_init']) - 2
 
     if args['pte'] is None:
         args['pte'] = args['ptr']
