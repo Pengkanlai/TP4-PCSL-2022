@@ -3,9 +3,10 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 import os
+import pandas as pd
 
 
-folder = "C:\data\d_change"
+folder = "C:\data\T(bs)_l"
 files = os.listdir(folder)
 files= [folder+'\\'+file for file in files]
 
@@ -26,34 +27,40 @@ for iif,file in enumerate(files):
 # plt.legend()
 # plt.show()
 
-#dic = {}
-#for key in objects.keys():
-    #keyalpha = objects[key][0]['alpha']
-    #print(objects[key][0])
-
-    #keyd = objects[key][0]['d']
-    #if keyd not in dic.keys():
-        #dic[keyd] = {}
-        #dic[keyd]['T'] = []
-        #dic[objects[key][0]['d']]['Train_loss'] = []
-    #dic[keyd]['T'].append(objects[key][1]['t'])
-    #dic[keyd]['Train_loss'].append(objects[key][1]['Train_loss'])
-
-plt.figure()
-plt.grid()
-
+dic = {}
 for key in objects.keys():
-    label = f"d = {objects[key][0]['d']}"
-    #idx = np.argsort(dic[keyd]['T'])
-    objects[key][1]['t'] = np.array(objects[key][1]['t'])
-    objects[key][1]['dw'] = np.array(objects[key][1]['dw'])
-    plt.loglog(objects[key][1]['t'], objects[key][1]['dw'], '-', label = label)
+    #print(objects[key][0])
+    keyalpha = objects[key][0]['alpha']
+    if keyalpha not in dic.keys():
+        dic[keyalpha] = {}
+        dic[keyalpha]['bs'] = []
+        dic[objects[key][0]['alpha']]['T'] = []
+    dic[keyalpha]['T'].append(objects[key][1]['t'][-1])
+    dic[keyalpha]['bs'].append(objects[key][0]['bs'])
 
-#bsvals = np.linspace(1,128)
-#plt.loglog(bsvals, 1e3*(bsvals/bsvals[0])**(-0.5), '--', label = "B**(-0.5)")
 
+#sorted_indices = np.argsort([objects[kk][0]['alpha'] for kk in objects.keys()])
 
-plt.xlabel('time')
-plt.ylabel('weight variation')
+#keys = np.array(list(objects.keys()))[sorted_indices]
+
+sns.set_style('whitegrid')
+
+for keyalpha in dic.keys():
+    label = f"alpha = {keyalpha}"
+    idx = np.argsort(dic[keyalpha]['bs'])
+    dic[keyalpha]['T'] = np.array(dic[keyalpha]['T'])
+    dic[keyalpha]['bs'] = np.array(dic[keyalpha]['bs'])
+    df = {"bs": dic[keyalpha]['bs'][idx], "T": dic[keyalpha]['T'][idx]}
+    df = pd.core.frame.DataFrame(df)
+    #ax.set(xscale="log", yscale="log")
+    sns.lineplot(x="bs", y="T",ci=50, data = df, label=label)
+    #plt.loglog(dic[keyalpha]['bs'][idx], dic[keyalpha]['T'][idx], '-', label = label)
+
+bsvals = np.linspace(1,128)
+plt.loglog(bsvals, 1e3*(bsvals/bsvals[0])**(-0.5), '--', label = "B**(-0.5)")
+
+plt.title('Total training time as a funciton of batch size using linear model',fontsize=20)
+plt.xlabel('batch size',fontsize=20)
+plt.ylabel('training time',fontsize=20)
 plt.legend()
 plt.show()
